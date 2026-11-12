@@ -1,0 +1,112 @@
+name: visual52 review58 paused parent probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/probe-paused-parent-stop]
+permissions:
+  contents: read
+jobs:
+  native-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: pmndrs/react-spring
+          ref: 83e476061290532ab517c4d4dfd60de21589e78e
+          path: original
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: pmndrs/react-spring
+          ref: 83e476061290532ab517c4d4dfd60de21589e78e
+          path: candidate
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.22.0
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 12.14.0
+          run_install: false
+      - name: Freeze exact source and all three test fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYASSETS'
+          import base64,json,os,pathlib,zlib
+          assets=json.loads(zlib.decompress(base64.b64decode('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')))
+          r=pathlib.Path(os.environ['RUNNER_TEMP'])/'review58';r.mkdir()
+          for name,text in assets.items():(r/name).write_text(text)
+          PYASSETS
+          for repo in original candidate; do
+            test "$(git -C "$repo" rev-parse HEAD)" = 83e476061290532ab517c4d4dfd60de21589e78e
+            git -C "$repo" diff --exit-code
+            git -C "$repo" diff --cached --exit-code
+            cp "$RUNNER_TEMP/review58/frozen10.ts" "$repo/packages/core/src/visual52-native-before.test.ts"
+            cp "$RUNNER_TEMP/review58/review58.ts" "$repo/packages/core/src/visual52-review58.test.ts"
+          done
+          cp "$RUNNER_TEMP/review58/permanent23.ts" original/packages/core/src/scheduleProps.test.ts
+          git -C candidate apply --check "$RUNNER_TEMP/review58/candidate.patch"
+          git -C candidate apply "$RUNNER_TEMP/review58/candidate.patch"
+          python3 "$RUNNER_TEMP/review58/guard.py" capture original
+          python3 "$RUNNER_TEMP/review58/guard.py" capture candidate
+          git -C candidate diff --check
+          node --version
+          pnpm --version
+      - name: Install exact frozen locks and official browser environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd original && pnpm install --frozen-lockfile)
+          (cd candidate && pnpm install --frozen-lockfile)
+          (cd candidate && pnpm exec playwright install --with-deps chromium)
+      - name: Capture original three-case native output before assessment
+        working-directory: original
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          pnpm exec vitest run --project unit packages/core/src/visual52-review58.test.ts --reporter=default --reporter=json --outputFile.json="$RUNNER_TEMP/review58/original.json" 2>&1 | tee "$RUNNER_TEMP/review58/original.log"
+          status=${PIPESTATUS[0]}
+          set -e
+          printf '%s\n' "$status" > "$RUNNER_TEMP/review58/original.status"
+          echo "VISUAL52_REVIEW58_ORIGINAL_EXIT_STATUS $status"
+          echo VISUAL52_REVIEW58_ORIGINAL_RAW_JSON_BEGIN
+          if test -f "$RUNNER_TEMP/review58/original.json"; then
+            cat "$RUNNER_TEMP/review58/original.json"
+          else
+            echo VISUAL52_REVIEW58_REPORT_MISSING
+          fi
+          echo VISUAL52_REVIEW58_ORIGINAL_RAW_JSON_END
+      - name: Capture candidate three-case native output before assessment
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          pnpm exec vitest run --project unit packages/core/src/visual52-review58.test.ts --reporter=default --reporter=json --outputFile.json="$RUNNER_TEMP/review58/candidate.json" 2>&1 | tee "$RUNNER_TEMP/review58/candidate.log"
+          status=${PIPESTATUS[0]}
+          set -e
+          printf '%s\n' "$status" > "$RUNNER_TEMP/review58/candidate.status"
+          echo "VISUAL52_REVIEW58_CANDIDATE_EXIT_STATUS $status"
+          echo VISUAL52_REVIEW58_CANDIDATE_RAW_JSON_BEGIN
+          if test -f "$RUNNER_TEMP/review58/candidate.json"; then
+            cat "$RUNNER_TEMP/review58/candidate.json"
+          else
+            echo VISUAL52_REVIEW58_REPORT_MISSING
+          fi
+          echo VISUAL52_REVIEW58_CANDIDATE_RAW_JSON_END
+      - name: Assess experiment completeness without assuming pass or fail pattern
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "$RUNNER_TEMP/review58/assess.py" "$RUNNER_TEMP/review58"
+      - name: Require original candidate source index trees and fixtures unchanged
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "$RUNNER_TEMP/review58/guard.py" verify original
+          python3 "$RUNNER_TEMP/review58/guard.py" verify candidate
+          echo VISUAL52_REVIEW58_ALL_SOURCE_FIXTURE_GUARDS_PASS
