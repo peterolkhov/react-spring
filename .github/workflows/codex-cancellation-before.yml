@@ -1,0 +1,103 @@
+name: visual52 native BEFORE
+on:
+  push:
+    branches: [codex/diagnose-cancelled-start-promises]
+permissions:
+  contents: read
+jobs:
+  native-before:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: pmndrs/react-spring
+          ref: 83e476061290532ab517c4d4dfd60de21589e78e
+          path: upstream
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.22.0
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 12.14.0
+          run_install: false
+      - name: Freeze whole upstream and public fixture
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 83e476061290532ab517c4d4dfd60de21589e78e
+          git diff --exit-code
+          git diff --cached --exit-code
+          git ls-files -z | xargs -0 sha256sum > "$RUNNER_TEMP/tracked-before.sha256"
+          git ls-files -s > "$RUNNER_TEMP/index-before.txt"
+          git write-tree > "$RUNNER_TEMP/tree-before.txt"
+          mkdir -p packages/core/src
+          python3 - <<'PYFIXTURE'
+          import base64,hashlib,pathlib
+          data=base64.b64decode('aW1wb3J0IHsgQ29udHJvbGxlciwgU3ByaW5nVmFsdWUgfSBmcm9tICdAcmVhY3Qtc3ByaW5nL2NvcmUnCmltcG9ydCB7IGRlc2NyaWJlLCBleHBlY3QsIGl0IH0gZnJvbSAndml0ZXN0JwoKY29uc3QgZmFjdG9yaWVzID0gewogIENvbnRyb2xsZXI6ICgpID0+IHsKICAgIGNvbnN0IHRhcmdldCA9IG5ldyBDb250cm9sbGVyKHsgeDogMCB9KQogICAgcmV0dXJuIHsKICAgICAgc3RhcnQ6IChwcm9wczogYW55KSA9PiB0YXJnZXQuc3RhcnQoeyB0bzogeyB4OiAxIH0sIGNvbmZpZzogeyBkdXJhdGlvbjogODAgfSwgLi4ucHJvcHMgfSksCiAgICAgIGNhbmNlbDogKCkgPT4gdGFyZ2V0LnN0b3AodHJ1ZSksCiAgICAgIHJlc3VtZTogKCkgPT4gdGFyZ2V0LnJlc3VtZSgpLAogICAgICB2YWx1ZTogKCkgPT4gdGFyZ2V0LmdldCgpLngsCiAgICB9CiAgfSwKICBTcHJpbmdWYWx1ZTogKCkgPT4gewogICAgY29uc3QgdGFyZ2V0ID0gbmV3IFNwcmluZ1ZhbHVlKDApCiAgICByZXR1cm4gewogICAgICBzdGFydDogKHByb3BzOiBhbnkpID0+IHRhcmdldC5zdGFydCh7IHRvOiAxLCBjb25maWc6IHsgZHVyYXRpb246IDgwIH0sIC4uLnByb3BzIH0pLAogICAgICBjYW5jZWw6ICgpID0+IHRhcmdldC5zdG9wKHRydWUpLAogICAgICByZXN1bWU6ICgpID0+IHRhcmdldC5yZXN1bWUoKSwKICAgICAgdmFsdWU6ICgpID0+IHRhcmdldC5nZXQoKSwKICAgIH0KICB9LAp9Cgpmb3IgKGNvbnN0IFtraW5kLCBjcmVhdGVdIG9mIE9iamVjdC5lbnRyaWVzKGZhY3RvcmllcykpIHsKICBkZXNjcmliZShraW5kLCAoKSA9PiB7CiAgICBmb3IgKGNvbnN0IHN0YXRlIG9mIFsnZGVsYXllZCcsICdwYXVzZWQnXSBhcyBjb25zdCkgewogICAgICBpdChgUkVEICR7c3RhdGV9IGNhbmNlbGxhdGlvbiBzZXR0bGVzIHN0YXJ0YCwgYXN5bmMgKCkgPT4gewogICAgICAgIGNvbnN0IHRhcmdldCA9IGNyZWF0ZSgpCiAgICAgICAgbGV0IHNldHRsZWQgPSBmYWxzZQogICAgICAgIGxldCByZXN1bHQ6IGFueSA9IG51bGwKICAgICAgICBsZXQgY29udGludWF0aW9uID0gZmFsc2UKICAgICAgICBjb25zdCBwZW5kaW5nID0gdGFyZ2V0LnN0YXJ0KHN0YXRlID09PSAnZGVsYXllZCcgPyB7IGRlbGF5OiAyMDAgfSA6IHsgcGF1c2U6IHRydWUgfSkKICAgICAgICBwZW5kaW5nLnRoZW4odmFsdWUgPT4geyBzZXR0bGVkID0gdHJ1ZTsgcmVzdWx0ID0gdmFsdWUgfSkudGhlbigoKSA9PiB7IGNvbnRpbnVhdGlvbiA9IHRydWUgfSkKICAgICAgICB0YXJnZXQuY2FuY2VsKCkKICAgICAgICBhd2FpdCBnbG9iYWxUaGlzLmFkdmFuY2UoMzIpCiAgICAgICAgY29uc3Qgc25hcHNob3QgPSB7IGtpbmQsIHN0YXRlLCBzZXR0bGVkLCBjb250aW51YXRpb24sIHJlc3VsdCwgdmFsdWU6IHRhcmdldC52YWx1ZSgpIH0KICAgICAgICBjb25zb2xlLmxvZygnVklTVUFMNTJfQ0FTRSAnICsgSlNPTi5zdHJpbmdpZnkoc25hcHNob3QpKQogICAgICAgIGV4cGVjdCh0YXJnZXQudmFsdWUoKSkudG9CZSgwKQogICAgICAgIGV4cGVjdChzZXR0bGVkKS50b0JlKHRydWUpCiAgICAgICAgZXhwZWN0KGNvbnRpbnVhdGlvbikudG9CZSh0cnVlKQogICAgICAgIGV4cGVjdChyZXN1bHQpLnRvTWF0Y2hPYmplY3QoeyBmaW5pc2hlZDogZmFsc2UsIGNhbmNlbGxlZDogdHJ1ZSB9KQogICAgICB9LCAxMDAwMCkKCiAgICAgIGl0KGBDT05UUk9MICR7c3RhdGV9IG5hdHVyYWwgY29tcGxldGlvbmAsIGFzeW5jICgpID0+IHsKICAgICAgICBjb25zdCB0YXJnZXQgPSBjcmVhdGUoKQogICAgICAgIGxldCBzZXR0bGVkID0gZmFsc2UKICAgICAgICBsZXQgcmVzdWx0OiBhbnkgPSBudWxsCiAgICAgICAgdGFyZ2V0LnN0YXJ0KHN0YXRlID09PSAnZGVsYXllZCcgPyB7IGRlbGF5OiAyMDAgfSA6IHsgcGF1c2U6IHRydWUgfSkKICAgICAgICAgIC50aGVuKHZhbHVlID0+IHsgc2V0dGxlZCA9IHRydWU7IHJlc3VsdCA9IHZhbHVlIH0pCiAgICAgICAgaWYgKHN0YXRlID09PSAncGF1c2VkJykgdGFyZ2V0LnJlc3VtZSgpCiAgICAgICAgYXdhaXQgZ2xvYmFsVGhpcy5hZHZhbmNlKDMyKQogICAgICAgIGNvbnNvbGUubG9nKCdWSVNVQUw1Ml9DT05UUk9MICcgKyBKU09OLnN0cmluZ2lmeSh7IGtpbmQsIHN0YXRlLCBzZXR0bGVkLCByZXN1bHQsIHZhbHVlOiB0YXJnZXQudmFsdWUoKSB9KSkKICAgICAgICBleHBlY3Qoc2V0dGxlZCkudG9CZSh0cnVlKQogICAgICAgIGV4cGVjdCh0YXJnZXQudmFsdWUoKSkudG9CZSgxKQogICAgICAgIGV4cGVjdChyZXN1bHQpLnRvTWF0Y2hPYmplY3QoeyBmaW5pc2hlZDogdHJ1ZSwgY2FuY2VsbGVkOiBmYWxzZSB9KQogICAgICB9LCAxMDAwMCkKICAgIH0KCiAgICBpdCgnQ09OVFJPTCBhY3RpdmUgY2FuY2VsbGF0aW9uIHNldHRsZXMgc3RhcnQnLCBhc3luYyAoKSA9PiB7CiAgICAgIGNvbnN0IHRhcmdldCA9IGNyZWF0ZSgpCiAgICAgIGxldCBzZXR0bGVkID0gZmFsc2UKICAgICAgbGV0IHJlc3VsdDogYW55ID0gbnVsbAogICAgICB0YXJnZXQuc3RhcnQoe30pLnRoZW4odmFsdWUgPT4geyBzZXR0bGVkID0gdHJ1ZTsgcmVzdWx0ID0gdmFsdWUgfSkKICAgICAgYXdhaXQgZ2xvYmFsVGhpcy5hZHZhbmNlKDEpCiAgICAgIHRhcmdldC5jYW5jZWwoKQogICAgICBhd2FpdCBnbG9iYWxUaGlzLmFkdmFuY2UoMzIpCiAgICAgIGNvbnNvbGUubG9nKCdWSVNVQUw1Ml9DT05UUk9MICcgKyBKU09OLnN0cmluZ2lmeSh7IGtpbmQsIHN0YXRlOiAnYWN0aXZlLWNhbmNlbCcsIHNldHRsZWQsIHJlc3VsdCwgdmFsdWU6IHRhcmdldC52YWx1ZSgpIH0pKQogICAgICBleHBlY3Qoc2V0dGxlZCkudG9CZSh0cnVlKQogICAgICBleHBlY3QocmVzdWx0KS50b01hdGNoT2JqZWN0KHsgZmluaXNoZWQ6IGZhbHNlLCBjYW5jZWxsZWQ6IHRydWUgfSkKICAgICAgZXhwZWN0KHRhcmdldC52YWx1ZSgpKS50b0JlTGVzc1RoYW4oMSkKICAgIH0sIDEwMDAwKQogIH0pCn0K')
+          assert hashlib.sha256(data).hexdigest() == '968ace61c8ce54eb303b3f0673874ea1836c829a101a8f8faf79ef8f9a575e32'
+          pathlib.Path('packages/core/src/visual52-native-before.test.ts').write_bytes(data)
+          PYFIXTURE
+          sha256sum packages/core/src/visual52-native-before.test.ts > "$RUNNER_TEMP/fixture-before.sha256"
+          node --version
+          pnpm --version
+      - name: Install exact upstream lock and Chromium
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: Run native browser suite and require precise behavioral RED
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          pnpm exec vitest run --project unit packages/core/src/visual52-native-before.test.ts --reporter=default --reporter=json --outputFile.json="$RUNNER_TEMP/visual52-native.json" 2>&1 | tee "$RUNNER_TEMP/visual52-native.log"
+          status=${PIPESTATUS[0]}
+          set -e
+          test "$status" = 1
+          python3 - <<'PYREPORT'
+          import json,pathlib,os
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])
+          d=json.loads((root/'visual52-native.json').read_text())
+          assert d['numTotalTests']==10,d
+          assert d['numPassedTests']==6,d
+          assert d['numFailedTests']==4,d
+          assert d.get('numRuntimeErrorTestSuites',0)==0,d
+          rows=[a for f in d['testResults'] for a in f['assertionResults']]
+          assert len(rows)==10
+          for row in rows:
+            red=' RED ' in row['fullName']
+            assert row['status']==('failed' if red else 'passed'),row
+            if red:
+              msg=' '.join(row.get('failureMessages',[]))
+              assert 'expected false to be true' in msg,msg
+          log=(root/'visual52-native.log').read_text()
+          import re
+          payloads=[json.loads(match.group(1)) for line in log.splitlines() if (match := re.search(r'VISUAL52_CASE (\{.*\})\s*$', re.sub(r'\x1b\[[0-9;]*m','',line)))]
+          assert not d.get('unhandledErrors') and not d.get('errors'),d
+          assert len(payloads)==4,payloads
+          for x in payloads:
+            assert x['settled'] is False and x['continuation'] is False and x['result'] is None and x['value']==0,x
+          print('VISUAL52_NATIVE_BEFORE_JSON '+json.dumps({'pin':'83e476061290532ab517c4d4dfd60de21589e78e','red':payloads,'passed_controls':6,'failed_expected':4,'runtime_errors':0},sort_keys=True))
+          PYREPORT
+      - name: Verify complete source index tree and fixture remained frozen
+        if: always()
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum --check "$RUNNER_TEMP/tracked-before.sha256" > /dev/null
+          sha256sum --check "$RUNNER_TEMP/fixture-before.sha256"
+          git ls-files -s > "$RUNNER_TEMP/index-after.txt"
+          cmp "$RUNNER_TEMP/index-before.txt" "$RUNNER_TEMP/index-after.txt"
+          test "$(git write-tree)" = "$(cat "$RUNNER_TEMP/tree-before.txt")"
+          test "$(git rev-parse HEAD)" = 83e476061290532ab517c4d4dfd60de21589e78e
+          git diff --exit-code
+          git diff --cached --exit-code
+          test "$(git ls-files --others --exclude-standard | grep -v '^packages/core/src/visual52-native-before.test.ts$' | wc -l | tr -d ' ')" = 0
+          echo VISUAL52_ALL_TRACKED_INDEX_TREE_FIXTURE_FROZEN
